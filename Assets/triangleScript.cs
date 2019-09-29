@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using UnityEngine;
 using KModkit;
 
@@ -252,5 +253,44 @@ public class triangleScript : MonoBehaviour
             Debug.LogFormat("[The Triangle #{0}] Strike! You pressed {1}. That is incorrect.", moduleId, pressedColour);
         }
         Start();
+    }
+
+    //twitch plays
+    #pragma warning disable 414
+    private readonly string TwitchHelpMessage = @"!{0} press tl/bl/br/large [Presses the specified triangle]";
+    #pragma warning restore 414
+    IEnumerator ProcessTwitchCommand(string command)
+    {
+        string[] parameters = command.Split(' ');
+        if (Regex.IsMatch(parameters[0], @"^\s*press\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
+        {
+            if(parameters.Length == 2)
+            {
+                if (Regex.IsMatch(parameters[1], @"^\s*large\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant) || Regex.IsMatch(parameters[1], @"^\s*middle\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
+                {
+                    yield return null;
+                    triangleButton[0].OnInteract();
+                    yield break;
+                }
+                if (Regex.IsMatch(parameters[1], @"^\s*tl\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant) || Regex.IsMatch(parameters[1], @"^\s*topleft\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
+                {
+                    yield return null;
+                    triangleButton[1].OnInteract();
+                    yield break;
+                }
+                if (Regex.IsMatch(parameters[1], @"^\s*bl\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant) || Regex.IsMatch(parameters[1], @"^\s*bottomleft\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
+                {
+                    yield return null;
+                    triangleButton[2].OnInteract();
+                    yield break;
+                }
+                if (Regex.IsMatch(parameters[1], @"^\s*br\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant) || Regex.IsMatch(parameters[1], @"^\s*bottomright\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
+                {
+                    yield return null;
+                    triangleButton[3].OnInteract();
+                    yield break;
+                }
+            }
+        }
     }
 }
