@@ -28,7 +28,7 @@ public class triangleScript : MonoBehaviour
     private string[] triangleColourNames = new string[4] {"blue","green","red","yellow"};
     private List<int> pickedColours = new List<int>();
     private string[] rotationLog = new string[2] {"clockwise","counterclockwise"};
-    private string[] backgroundLog = new string[3] {"Picasso","Cool", "Concentric"};
+    private string[] backgroundLog = new string[3] {"Picasso","Cool","Concentric"};
 
     private int rotation = 0;
     private int background = 0;
@@ -46,6 +46,7 @@ public class triangleScript : MonoBehaviour
     {
         moduleId = moduleIdCounter++;
         colorblindActive = Colorblind.ColorblindModeActive;
+        Debug.LogFormat("[The Triangle #{0}] Colorblind mode: {1}", moduleId, colorblindActive);
         foreach (KMSelectable triangle in triangleButton)
         {
             KMSelectable pressedTriangle = triangle;
@@ -62,7 +63,6 @@ public class triangleScript : MonoBehaviour
 
     void Start()
     {
-        Debug.LogFormat("[The Triangle #{0}] Colorblind mode: {1}", moduleId, colorblindActive);
         SetRules();
         SetColours();
         CalculateColour();
@@ -99,21 +99,24 @@ public class triangleScript : MonoBehaviour
             }
             else
             {
-                colorblindText[i].color = Color.black;
                 if (triangleButton[i].GetComponent<TriangleColour>().triangleColour.Equals("red"))
                 {
+                    colorblindText[i].color = Color.white;
                     colorblindText[i].text = "R";
                 }
                 else if (triangleButton[i].GetComponent<TriangleColour>().triangleColour.Equals("green"))
                 {
+                    colorblindText[i].color = Color.white;
                     colorblindText[i].text = "G";
                 }
                 else if (triangleButton[i].GetComponent<TriangleColour>().triangleColour.Equals("yellow"))
                 {
+                    colorblindText[i].color = Color.black;
                     colorblindText[i].text = "Y";
                 }
                 else if (triangleButton[i].GetComponent<TriangleColour>().triangleColour.Equals("blue"))
                 {
+                    colorblindText[i].color = Color.white;
                     colorblindText[i].text = "B";
                 }
             }
@@ -327,7 +330,7 @@ public class triangleScript : MonoBehaviour
 
     //twitch plays
     #pragma warning disable 414
-    private readonly string TwitchHelpMessage = @"!{0} press tl/bl/br/large [Presses the triangle in the specified position] | !{0} colorblind [Toggles colorblind mode]";
+    private readonly string TwitchHelpMessage = @"!{0} press tl/bl/br/mid [Presses the triangle in the specified position] | !{0} colorblind [Toggles colorblind mode]";
     #pragma warning restore 414
     IEnumerator ProcessTwitchCommand(string command)
     {
@@ -358,7 +361,7 @@ public class triangleScript : MonoBehaviour
         {
             if(parameters.Length == 2)
             {
-                if (Regex.IsMatch(parameters[1], @"^\s*large\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant) || Regex.IsMatch(parameters[1], @"^\s*middle\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
+                if (Regex.IsMatch(parameters[1], @"^\s*mid\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant) || Regex.IsMatch(parameters[1], @"^\s*middle\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant) || Regex.IsMatch(parameters[1], @"^\s*large\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
                 {
                     yield return null;
                     triangleButton[0].OnInteract();
