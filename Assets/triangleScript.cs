@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using UnityEngine;
 using KModkit;
 
@@ -9,6 +10,9 @@ public class triangleScript : MonoBehaviour
 {
     public KMBombInfo Bomb;
     public KMAudio Audio;
+    public KMColorblindMode Colorblind;
+    public TextMesh[] colorblindText;
+    private bool colorblindActive = false;
 
     public KMSelectable[] triangleButton;
 
@@ -24,7 +28,7 @@ public class triangleScript : MonoBehaviour
     private string[] triangleColourNames = new string[4] {"blue","green","red","yellow"};
     private List<int> pickedColours = new List<int>();
     private string[] rotationLog = new string[2] {"clockwise","counterclockwise"};
-    private string[] backgroundLog = new string[3] {"Picasso","Cool", "Concentric"};
+    private string[] backgroundLog = new string[3] {"Picasso","Cool","Concentric"};
 
     private int rotation = 0;
     private int background = 0;
@@ -41,11 +45,19 @@ public class triangleScript : MonoBehaviour
     void Awake()
     {
         moduleId = moduleIdCounter++;
+        colorblindActive = Colorblind.ColorblindModeActive;
+        Debug.LogFormat("[The Triangle #{0}] Colorblind mode: {1}", moduleId, colorblindActive);
         foreach (KMSelectable triangle in triangleButton)
         {
             KMSelectable pressedTriangle = triangle;
             triangle.OnInteract += delegate () { TrianglePress(pressedTriangle); return false; };
         }
+        for (int i = 0; i < colorblindText.Length; i++)
+        {
+            colorblindText[i].gameObject.SetActive(false);
+        }
+        triangleText.gameObject.SetActive(false);
+        GetComponent<KMBombModule>().OnActivate += OnActivate;
     }
 
 
@@ -54,6 +66,61 @@ public class triangleScript : MonoBehaviour
         SetRules();
         SetColours();
         CalculateColour();
+        SetColorblindColors();
+    }
+
+    void OnActivate()
+    {
+        triangleText.gameObject.SetActive(true);
+        if (colorblindActive)
+        {
+            for(int i = 0; i < colorblindText.Length; i++)
+            {
+                colorblindText[i].gameObject.SetActive(true);
+            }
+        }
+    }
+
+    void SetColorblindColors()
+    {
+        for (int i = 0; i < colorblindText.Length; i++)
+        {
+            if (i == 0)
+            {
+                if (triangleButton[0].GetComponent<TriangleColour>().triangleColour.Equals("yellow"))
+                {
+                    colorblindText[0].color = Color.black;
+                }
+                else
+                {
+                    colorblindText[0].color = Color.white;
+                }
+                colorblindText[0].text = triangleButton[0].GetComponent<TriangleColour>().triangleColour.ToUpper();
+            }
+            else
+            {
+                if (triangleButton[i].GetComponent<TriangleColour>().triangleColour.Equals("red"))
+                {
+                    colorblindText[i].color = Color.white;
+                    colorblindText[i].text = "R";
+                }
+                else if (triangleButton[i].GetComponent<TriangleColour>().triangleColour.Equals("green"))
+                {
+                    colorblindText[i].color = Color.white;
+                    colorblindText[i].text = "G";
+                }
+                else if (triangleButton[i].GetComponent<TriangleColour>().triangleColour.Equals("yellow"))
+                {
+                    colorblindText[i].color = Color.black;
+                    colorblindText[i].text = "Y";
+                }
+                else if (triangleButton[i].GetComponent<TriangleColour>().triangleColour.Equals("blue"))
+                {
+                    colorblindText[i].color = Color.white;
+                    colorblindText[i].text = "B";
+                }
+            }
+        }
     }
 
     void SetRules()
@@ -243,6 +310,13 @@ public class triangleScript : MonoBehaviour
                 Debug.LogFormat("[The Triangle #{0}] Module disarmed.", moduleId);
                 triangleRotation.SetTrigger("solved");
                 triangleText.text = "";
+                if (colorblindActive)
+                {
+                    for(int i = 0; i < colorblindText.Length; i++)
+                    {
+                        colorblindText[i].text = "";
+                    }
+                }
                 return;
             }
         }
@@ -252,5 +326,82 @@ public class triangleScript : MonoBehaviour
             Debug.LogFormat("[The Triangle #{0}] Strike! You pressed {1}. That is incorrect.", moduleId, pressedColour);
         }
         Start();
+    }
+
+    //twitch plays
+    #pragma warning disable 414
+    private readonly string TwitchHelpMessage = @"!{0} press tl/bl/br/mid [Presses the triangle in the specified position] | !{0} colorblind [Toggles colorblind mode]";
+    #pragma warning restore 414
+    IEnumerator ProcessTwitchCommand(string command)
+    {
+        if (Regex.IsMatch(command, @"^\s*colorblind\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
+        {
+            yield return null;
+            Debug.LogFormat("[The Triangle #{0}] Toggled colorblind mode! (TP)", moduleId);
+            if (colorblindActive)
+            {
+                colorblindActive = false;
+                for(int i = 0; i < colorblindText.Length; i++)
+                {
+                    colorblindText[i].gameObject.SetActive(false);
+                }
+            }
+            else
+            {
+                colorblindActive = true;
+                for (int i = 0; i < colorblindText.Length; i++)
+                {
+                    colorblindText[i].gameObject.SetActive(true);
+                }
+            }
+            yield break;
+        }
+        string[] parameters = command.Split(' ');
+        if (Regex.IsMatch(parameters[0], @"^\s*press\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
+        {
+            if(parameters.Length == 2)
+            {
+                if (Regex.IsMatch(parameters[1], @"^\s*mid\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant) || Regex.IsMatch(parameters[1], @"^\s*middle\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant) || Regex.IsMatch(parameters[1], @"^\s*large\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
+                {
+                    yield return null;
+                    triangleButton[0].OnInteract();
+                    yield break;
+                }
+                if (Regex.IsMatch(parameters[1], @"^\s*tl\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant) || Regex.IsMatch(parameters[1], @"^\s*topleft\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
+                {
+                    yield return null;
+                    triangleButton[1].OnInteract();
+                    yield break;
+                }
+                if (Regex.IsMatch(parameters[1], @"^\s*bl\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant) || Regex.IsMatch(parameters[1], @"^\s*bottomleft\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
+                {
+                    yield return null;
+                    triangleButton[2].OnInteract();
+                    yield break;
+                }
+                if (Regex.IsMatch(parameters[1], @"^\s*br\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant) || Regex.IsMatch(parameters[1], @"^\s*bottomright\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
+                {
+                    yield return null;
+                    triangleButton[3].OnInteract();
+                    yield break;
+                }
+            }
+        }
+    }
+
+    IEnumerator TwitchHandleForcedSolve()
+    {
+        while(moduleSolved == false)
+        {
+            for(int i = 0; i < triangleButton.Length; i++)
+            {
+                if (triangleButton[i].GetComponentInChildren<TriangleColour>().triangleColour.Equals(correctColour))
+                {
+                    triangleButton[i].OnInteract();
+                    break;
+                }
+            }
+            yield return new WaitForSeconds(0.1f);
+        }
     }
 }
